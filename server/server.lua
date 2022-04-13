@@ -1,3 +1,8 @@
+ESX = nil
+local QueServer = GetConvar("server_number", "1")
+
+TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+
 RegisterServerEvent('chat:init')
 RegisterServerEvent('chat:addTemplate')
 RegisterServerEvent('chat:addMessage')
@@ -8,6 +13,53 @@ RegisterServerEvent('chat:clear')
 RegisterServerEvent('__cfx_internal:commandFallback')
 RegisterNetEvent('playerJoining')
 
+
+local isTagEnabled = {}
+
+AddEventHandler("toggleChatTag", function(source, toggle)
+	isTagEnabled[source] = toggle
+end)
+
+function playerRank(source)
+	if isTagEnabled[source] then
+		if QueServer == "TENCITY" then
+			if IsPlayerAceAllowed(source, "tag.jefe") then
+				return '^2[COORD] ^7'
+			elseif IsPlayerAceAllowed(source, "tag.coord") then
+				return '^9[HEAD ADMIN] ^7'
+			elseif IsPlayerAceAllowed(source, "tag.superadmin") then
+				return '^3[SUPERADMIN] ^7'
+			elseif IsPlayerAceAllowed(source, "tag.admin") then
+				return '^1[ADMIN] ^7'
+			elseif IsPlayerAceAllowed(source, "tag.mod") then
+				return '<span style="color: #ee7600">[MOD]</span> ^7'
+			elseif IsPlayerAceAllowed(source, "tag.support") then
+				return '^5[SOPORTE] ^7'
+			else 
+				return ''
+			end
+		else
+			if IsPlayerAceAllowed(source, "tag.jefe") then
+				return '^2[ADMIN] ^7'
+			elseif IsPlayerAceAllowed(source, "tag.coord") then
+				return '^9[ADMIN] ^7'
+			elseif IsPlayerAceAllowed(source, "tag.superadmin") then
+				return '^3[STAFF4] ^7'
+			elseif IsPlayerAceAllowed(source, "tag.admin") then
+				return '^1[STAFF3] ^7'
+			elseif IsPlayerAceAllowed(source, "tag.mod") then
+				return '<span style="color: #ee7600">[STAFF2]</span> ^7'
+			elseif IsPlayerAceAllowed(source, "tag.support") then
+				return '^5[STAFF1] ^7'
+			else 
+				return ''
+			end
+		end
+	else
+		return ''
+	end
+end
+
 function GetName(source)
 	return GetPlayerName(source) or '?'
 end
@@ -16,6 +68,8 @@ AddEventHandler('_chat:messageEntered', function(author, color, message, channel
     if not message or not author then
         return
     end
+
+	--print(author, color, message, channel)
 
     TriggerEvent('chatMessage', source, author, message, channel)
 
@@ -39,13 +93,13 @@ AddEventHandler('__cfx_internal:commandFallback', function(command)
 end)
 
 -- player join messages
-AddEventHandler('chat:init', function()
+--[[AddEventHandler('chat:init', function()
     TriggerClientEvent('chatMessage', -1, '', { 255, 255, 255 }, '^2* ' .. GetName(source) .. '^r^2 joined.')
-end)
+end)]]
 
-AddEventHandler('playerDropped', function(reason)
+--[[AddEventHandler('playerDropped', function(reason)
     TriggerClientEvent('chatMessage', -1, '', { 255, 255, 255 }, '^2* ' .. GetName(source) .. '^r^2 left (' .. reason .. ')')
-end)
+end)]]
 
 -- command suggestions for clients
 local function refreshCommands(player)
@@ -215,7 +269,10 @@ function LocalMessage(source, message)
 		color = Config.DefaultLocalColor
 	end
 
-	TriggerClientEvent('poodlechat:localMessage', -1, source, name, color, message)
+	--TriggerClientEvent('poodlechat:localMessage', -1, source, name, color, message)
+	--TriggerEvent("esx:triggerScopeEvent", 'poodlechat:localMessage', source, source, playerRank(source)..name, color, message)
+	local payload = { '[Local] [' .. source .. '] ' .. playerRank(source), GetPlayerName(source), GetEntityCoords(GetPlayerPed(source)) }
+	ESX.TriggerScopeEvent('esx_rpchat:sendProximityMessage', source, source, payload, message)
 end
 
 function SendUserMessageToDiscord(source, name, message, avatar)
@@ -287,7 +344,7 @@ function SendMessageWithSteamAvatar(source, name, message)
 	return false
 end
 
-function GlobalMessage(source, message)
+function AyudaMessage(source, message)
 	if message == '' then
 		return
 	end
@@ -297,10 +354,10 @@ function GlobalMessage(source, message)
 	local name, color = GetNameWithRoleAndColor(source)
 
 	if not color then
-		color = Config.DefaultGlobalColor
+		color = Config.DefaultAyudaColor
 	end
 
-	TriggerClientEvent('chat:addMessage', -1, {color = color, args = {'[Global] ' .. name, message}})
+	TriggerClientEvent('chat:addMessage', -1, {color = color, args = {'[Ayuda] [' .. source .. '] ' .. name, message}})
 
 	-- Send global messages to Discord
 	if IsDiscordSendEnabled() then
@@ -322,7 +379,7 @@ function GlobalMessage(source, message)
 end
 
 AddEventHandler('poodlechat:globalMessage', function(message)
-	GlobalMessage(source, message)
+	AyudaMessage(source, message)
 end)
 
 function LocalCommand(source, args, raw)
@@ -343,8 +400,8 @@ end, true)
 -- Send messages to current channel by default
 AddEventHandler('chatMessage', function(source, name, message, channel)
 	if string.sub(message, 1, string.len("/")) ~= "/" then
-		if channel == 'Global' then
-			GlobalMessage(source, message)
+		if channel == 'Ayuda' then
+			AyudaMessage(source, message)
 		elseif channel == 'Local' then
 			LocalMessage(source, message)
 		elseif channel == 'Staff' then
@@ -466,23 +523,22 @@ function IsResponseOk(status)
 end
 
 function SendReportToDiscord(source, id, reason)
-	local reporterName = GetName(source)
-	local reporteeName = GetName(id)
-	local reporterLicense = GetIDFromSource('license', source)
-	local reporteeLicense = GetIDFromSource('license', id)
-	local reporterIp = GetPlayerEndpoint(source)
-	local reporteeIp = GetPlayerEndpoint(id)
+	local xPlayer, xTarget = ESX.GetPlayerFromId(source), ESX.GetPlayerFromId(id) or nil
+	local reporterName = xPlayer.name -- GetName(source)
+	local reporteeName = xTarget.name -- GetName(id)
+	local reporterLicense = xPlayer.steam -- GetIDFromSource('license', source)
+	local reporteeLicense = xTarget.steam -- GetIDFromSource('license', id)
+
+	--print(reporterLicense or "nil", string.gsub(reporterLicense, "steam:", "") or "nil",  tonumber(string.gsub(reporterLicense, "steam:", ""), 16) or "nil")
 
 	local message = table.concat({
-		'**Reporter:** ' .. reporterName,
-		'**License:** ' .. reporterLicense,
-		'**IP:** ' .. reporterIp,
+		'**__AUTOR DEL REPORTE__: [' .. xPlayer.name .. '](https://steamid.pro/lookup/' .. tonumber(string.gsub(reporterLicense, 'steam:', ''), 16) .. ') [ID: ' .. source .. ']**',
+		'**Discord:** ' .. "<@" .. string.gsub(xPlayer.discord, "discord:", "") .. ">",
 		'',
-		'**Player Reported:** ' .. reporteeName,
-		'**License:** ' .. reporteeLicense,
-		'**IP:** ' .. reporteeIp,
+		'**Usuario reportado:** [' .. reporteeName .. '](https://steamid.pro/lookup/' .. tonumber(string.gsub(reporteeLicense, 'steam:', ''), 16) .. ') **[ID: ' .. id .. ']**',
+		'**Discord:** ' .. "<@" .. string.gsub(xTarget.discord, "discord:", "") .. ">",
 		'',
-		'**Reason:** ' .. reason
+		'**__REPORTE__:**\n```' .. reason .. '```'
 	}, '\n')
 
 	local data = {
@@ -540,7 +596,7 @@ function SendReportToDiscord(source, id, reason)
 	end)
 end
 
-AddEventHandler('poodlechat:report', function(player, reason)
+AddEventHandler('poodlechat:report', function(source, player, reason)
 	if not IsDiscordReportEnabled() then
 		TriggerClientEvent('chat:addMessage', source, {
 			color = {255, 0, 0},
@@ -549,7 +605,7 @@ AddEventHandler('poodlechat:report', function(player, reason)
 		return
 	end
 
-	local id = GetPlayerId(player)
+	local id = player ~= "BUG" and GetPlayerId(player) or player
 
 	if id then
 		SendReportToDiscord(source, id, reason)
@@ -561,7 +617,7 @@ AddEventHandler('poodlechat:report', function(player, reason)
 	end
 end)
 
-AddEventHandler('playerJoining', function()
+--[[AddEventHandler('playerJoining', function()
 	SendToDiscord("**" .. GetName(source) .. "** is connecting to the server.", 65280)
 end)
 
@@ -572,7 +628,7 @@ AddEventHandler('playerDropped', function(reason)
 	end
 
 	SendToDiscord("**" .. GetName(source) .. "** has left the server. \n Reason: " .. reason, color)
-end)
+end)]]
 
 AddEventHandler('poodlechat:sendToDiscord', SendToDiscord)
 

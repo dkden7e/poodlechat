@@ -24,6 +24,16 @@ RegisterNetEvent('__cfx_internal:serverPrint')
 
 RegisterNetEvent('_chat:messageEntered')
 
+local myServerId = nil
+
+Citizen.CreateThread(function()
+	Citizen.Wait(1000)
+	while myServerId == nil or myServerId < 1 do
+		Citizen.Wait(500)
+		myServerId = GetPlayerServerId(PlayerId())
+	end
+end)
+
 --deprecated, use chat:addMessage
 AddEventHandler('chatMessage', function(author, color, text)
 	local args = { text }
@@ -119,6 +129,8 @@ RegisterNUICallback('chatResult', function(data, cb)
 			TriggerServerEvent('_chat:messageEntered', GetPlayerName(id), { r, g, b }, data.message, Channel)
 		end
 	end
+    TriggerServerEvent("chat:isOpenSV", false)
+    TriggerEvent("chat:isOpenCL2", false)
 
 	cb('ok')
 end)
@@ -211,14 +223,14 @@ RegisterNetEvent('poodlechat:setReplyTo')
 RegisterNetEvent('poodlechat:staffMessage')
 RegisterNetEvent('poodlechat:setPermissions')
 
-function GlobalCommand(source, args, user)
+function AyudaCommand(source, args, user)
 	TriggerServerEvent('poodlechat:globalMessage', table.concat(args, ' '))
 end
 
-RegisterCommand('global', GlobalCommand, false)
-RegisterCommand('g', GlobalCommand, false)
+RegisterCommand('global', AyudaCommand, false)
+RegisterCommand('g', AyudaCommand, false)
 
-RegisterCommand('me', function(source, args, raw)
+--[[RegisterCommand('me', function(source, args, raw)
 	TriggerServerEvent('poodlechat:actionMessage', table.concat(args, ' '))
 end, false)
 
@@ -232,13 +244,13 @@ function WhisperCommand(source, args, user)
 end
 
 RegisterCommand('whisper', WhisperCommand, false)
-RegisterCommand('w', WhisperCommand, false)
+RegisterCommand('w', WhisperCommand, false)]]
 
 RegisterCommand('clear', function(source, args, user)
 	TriggerEvent('chat:clear', source)
 end, false)
 
-function AddLocalMessage(name, color, message)
+--[[function AddLocalMessage(name, color, message)
 	TriggerEvent('chat:addMessage', {color = color, args = {'[Local] ' .. name, message}})
 end
 
@@ -246,7 +258,7 @@ function IsInProximity(id, distance)
 	local myId = PlayerId()
 	local pid = GetPlayerFromServerId(id)
 
-	if pid == myId then
+	if pid == myId and id ~= myServerId then
 		return true
 	end
 
@@ -267,9 +279,9 @@ AddEventHandler('poodlechat:localMessage', function(id, name, color, message)
 	if IsInProximity(id, Config.LocalMessageDistance) then
 		AddLocalMessage(name, color, message)
 	end
-end)
+end)]]
 
-AddEventHandler('poodlechat:action', function(id, name, message)
+--[[AddEventHandler('poodlechat:action', function(id, name, message)
 	if IsInProximity(id, Config.ActionDistance) then
 		TriggerEvent('chat:addMessage', {color = Config.ActionColor, args = {'^*' .. name .. '^r^* ' .. message}})
 	end
@@ -301,7 +313,7 @@ RegisterCommand('r', ReplyCommand, false)
 
 AddEventHandler('poodlechat:setReplyTo', function(id)
 	ReplyTo = tostring(id)
-end)
+end)]]
 
 function SetChannel(name)
 	Channel = name
@@ -310,7 +322,7 @@ function SetChannel(name)
 
 	if name == 'Local' then
 		channelId = 'channel-local'
-	elseif name == 'Global' then
+	elseif name == 'Ayuda' then
 		channelId = 'channel-global'
 	elseif name == 'Staff' then
 		channelId = 'channel-staff'
@@ -327,7 +339,7 @@ RegisterNUICallback('setChannel', function(data, cb)
 	if data.channelId == 'channel-local' then
 		name = 'Local'
 	elseif data.channelId == 'channel-global' then
-		name = 'Global'
+		name = 'Ayuda'
 	elseif data.channelId == 'channel-staff' then
 		name = 'Staff'
 	end
@@ -338,15 +350,15 @@ end)
 function CycleChannel()
 	if Permissions.canAccessStaffChannel then
 		if Channel == 'Local' then
-			Channel = 'Global'
-		elseif Channel == 'Global' then
+			Channel = 'Ayuda'
+		elseif Channel == 'Ayuda' then
 			Channel = 'Staff'
 		else
 			Channel = 'Local'
 		end
 	else
 		if Channel == 'Local' then
-			Channel = 'Global'
+			Channel = 'Ayuda'
 		else
 			Channel = 'Local'
 		end
@@ -359,7 +371,7 @@ RegisterNUICallback('onLoad', function(data, cb)
 	SetChannel(Channel)
 	cb({
 		localColor = Config.DefaultLocalColor,
-		globalColor = Config.DefaultGlobalColor,
+		globalColor = Config.DefaultAyudaColor,
 		staffColor = Config.DefaultStaffColor,
 		emoji = json.encode(Emoji)
 	})
@@ -374,7 +386,7 @@ RegisterCommand('togglechat', function(source, args, raw)
 	HideChat = not HideChat
 end)
 
-RegisterCommand('staff', function(source, args, raw)
+--[[RegisterCommand('staff', function(source, args, raw)
 	local message = table.concat(args, ' ')
 
 	if message == '' then
@@ -382,7 +394,7 @@ RegisterCommand('staff', function(source, args, raw)
 	end
 
 	TriggerServerEvent('poodlechat:staffMessage', message)
-end)
+end)]]
 
 AddEventHandler('poodlechat:setPermissions', function(permissions)
 	Permissions = permissions
@@ -393,11 +405,12 @@ AddEventHandler('poodlechat:setPermissions', function(permissions)
 	})
 end)
 
-RegisterCommand('report', function(source, args, raw)
+-- MOVIDO A NV-REPORTS
+--[[RegisterCommand('report', function(source, args, raw)
 	if #args < 2 then
 		TriggerEvent('chat:addMessage', {
 			color = {255, 0, 0},
-			args = {'Error', 'You must specify a player and a reason'}
+			args = {'Error', 'Debes especificar usuario y motivo.'}
 		})
 		return
 	end
@@ -406,46 +419,58 @@ RegisterCommand('report', function(source, args, raw)
 	local reason = table.concat(args, ' ')
 
 	TriggerServerEvent('poodlechat:report', player, reason)
-end, false)
+end, false)]]
+
+RegisterKeyMapping("radialmenu", "[IMPORTANTE] - abrir menú radial", "keyboard", "g")
+
+RegisterCommand("radialmenu", function()
+	if not (chatInputActivating or chatInputActive) then
+		TriggerEvent("radialmenu:open")
+	end
+end)
 
 CreateThread(function()
 	TriggerServerEvent('poodlechat:getPermissions')
 
 	-- Command documentation
-	TriggerEvent('chat:addSuggestion', '/clear', 'Clear chat window', {})
-	TriggerEvent('chat:addSuggestion', '/global', 'Send a message to all players', {
-		{name = 'message', help = 'The message to send'}
+	TriggerEvent('chat:addSuggestion', '/clear', 'Ventana de chat.', {})
+	TriggerEvent('chat:addSuggestion', '/global', 'Enviar mensaje global.', {
+		{name = 'message', help = 'Mensaje'}
 	})
-	TriggerEvent('chat:addSuggestion', '/g', 'Send a message to all players', {
-		{name = 'message', help = 'The message to send'}
+	TriggerEvent('chat:addSuggestion', '/g', 'Enviar mensaje global.', {
+		{name = 'message', help = 'Mensaje'}
 	})
-	TriggerEvent('chat:addSuggestion', '/me', 'Perform an action', {
-		{name = 'action', help = 'The action to perform'}
+	--[[TriggerEvent('chat:addSuggestion', '/me', 'Realizar una acción', {
+		{name = 'action', help = 'La acción a realizar'}
+	})]]
+	--[[TriggerEvent('chat:addSuggestion', '/reply', 'Responder al último susurro.', {
+		{name = 'message', help = 'Mensaje'}
 	})
-	TriggerEvent('chat:addSuggestion', '/reply', 'Reply to the last whisper', {
-		{name = 'message', help = 'The message to send'}
-	})
-	TriggerEvent('chat:addSuggestion', '/r', 'Reply to the last whisper', {
-		{name = 'message', help = 'The message to send'}
+	TriggerEvent('chat:addSuggestion', '/r', 'Responder al último susurro.', {
+		{name = 'message', help = 'Mensaje'}
+	})]]
+
+	TriggerEvent('chat:addSuggestion', '/report', 'Reportar una situación o bug. Para reportar a otro usuario de quien sepas la ID, usa /report2 [ID] [motivo]', {
+		{name = 'motivo', help = 'Explicación de la situación o bug que quieres reportar'}
 	})
 
-	TriggerEvent('chat:addSuggestion', '/report', 'Report another player for abuse', {
-		{name = 'player', help = 'ID or name of the player to report'},
-		{name = 'reason', help = 'Reason you are reporting this player'}
+	TriggerEvent('chat:addSuggestion', '/report2', 'Reportar a un usuario del que sabes la ID. Para una situación o bug (incluyendo a usuarios de quienes no sepas la ID), usa /report [motivo]', {
+		{name = 'jugador', help = 'ID o nombre del jugador a reportar'},
+		{name = 'motivo', help = 'Explicación de las infracciones del usuario que quieres reportar'}
 	})
 
-	TriggerEvent('chat:addSuggestion', '/say', 'Send a message to nearby players', {
-		{name = "message", help = "The message to send"}
+	--[[TriggerEvent('chat:addSuggestion', '/say', 'Send a message to nearby players', {
+		{name = "message", help = "Mensaje"}
+	})]]
+	TriggerEvent('chat:addSuggestion', '/togglechat', 'Alternar chat', {})
+	--[[TriggerEvent('chat:addSuggestion', '/whisper', 'Enviar un mensaje privado', {
+		{name = "player", help = "ID o nombre del destinatario."},
+		{name = "message", help = "Mensaje"}
 	})
-	TriggerEvent('chat:addSuggestion', '/togglechat', 'Toggle the chat on/off', {})
-	TriggerEvent('chat:addSuggestion', '/whisper', 'Send a private message', {
-		{name = "player", help = "ID or name of the player to message"},
-		{name = "message", help = "The message to send"}
-	})
-	TriggerEvent('chat:addSuggestion', '/w', 'Send a private message', {
-		{name = "player", help = "ID or name of the player to message"},
-		{name = "message", help = "The message to send"}
-	})
+	TriggerEvent('chat:addSuggestion', '/w', 'Enviar un mensaje privado', {
+		{name = "player", help = "ID o nombre del destinatario."},
+		{name = "message", help = "Mensaje"}
+	})]]
 
 	-- Emoji suggestions
 	AddEmojiSuggestions()
@@ -464,6 +489,10 @@ CreateThread(function()
 				SendNUIMessage({
 					type = 'ON_OPEN'
 				})
+				TriggerServerEvent("chat:isOpenSV", true)
+				TriggerEvent("chat:isOpenCL2", true)
+				Citizen.Wait(20)
+				SetChannel("Local")
 			end
 		end
 

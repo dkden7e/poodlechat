@@ -61,6 +61,10 @@ window.APP = {
 				clearTimeout(this.showWindowTimer);
 			}
 			setTimeout(() => this.$refs.input.focus(), 100);
+			document.getElementById('channel-local').className = 'channel tab active-tab';
+			document.getElementById('channel-global').className = 'channel tab';
+			document.getElementById('channel-staff').className = 'channel tab';	
+			
 			/*this.focusTimer = setInterval(() => {
 				if (this.$refs.input) {
 					this.$refs.input.focus();
@@ -312,7 +316,7 @@ function populateEmojiList(filter) {
 				document.getElementById('emoji-search').placeholder = emoji[0].join(', ');
 			});
 			div.addEventListener('mouseout', function(event) {
-				document.getElementById('emoji-search').placeholder = 'Search...';
+				document.getElementById('emoji-search').placeholder = 'Buscar emoji...';
 			});
 			emojiList.appendChild(div);
 		}
@@ -321,10 +325,10 @@ function populateEmojiList(filter) {
 
 window.addEventListener('load', event => {
 	fetch('https://' + GetParentResourceName() + '/onLoad').then(resp => resp.json()).then(resp => {
-		document.getElementById('channel-local').style.color = colorToRgb(resp.localColor);
+		/* document.getElementById('channel-local').style.color = colorToRgb(resp.localColor);
 		document.getElementById('channel-global').style.color = colorToRgb(resp.globalColor);
-		document.getElementById('channel-staff').style.color = colorToRgb(resp.staffColor);
-
+		document.getElementById('channel-staff').style.color = colorToRgb(resp.staffColor); */
+				
 		emojis = JSON.parse(resp.emoji);
 		populateEmojiList();
 	});

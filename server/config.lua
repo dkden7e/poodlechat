@@ -22,16 +22,16 @@ ServerConfig.DiscordChannel = ''
 ServerConfig.DiscordColor = {115, 138, 219}
 
 -- Discord webhook to post player reports to.
-ServerConfig.DiscordReportWebhook = ''
+ServerConfig.DiscordReportWebhook = GetConvar("webhook_reportes", "1")
 
 -- Colour used for the report message embed on Discord.
 ServerConfig.DiscordReportColor = 0xfe7f9c
 
 -- Message sent to players upon successfully submitting a report.
-ServerConfig.DiscordReportFeedbackSuccessMessage = 'Your report has been submitted.'
+ServerConfig.DiscordReportFeedbackSuccessMessage = 'Reporte enviado.'
 
 -- Message sent to players if a report fails.
-ServerConfig.DiscordReportFeedbackFailureMessage = 'Sorry, something went wrong with your report.'
+ServerConfig.DiscordReportFeedbackFailureMessage = 'Ocurrió un error, tu reporte no fue enviado.'
 
 -- Colour for the above feedback message.
 ServerConfig.DiscordReportFeedbackColor = {255, 165, 0}

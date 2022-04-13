@@ -7,7 +7,7 @@ Config.ActionColor = {200, 0, 255}
 Config.DefaultLocalColor = {0, 153, 204}
 
 -- Default colour for global messages
-Config.DefaultGlobalColor = {212, 175, 55}
+Config.DefaultAyudaColor = {212, 212, 15}
 
 -- Colour for private messages received from other players
 Config.WhisperColor = {254, 127, 156}

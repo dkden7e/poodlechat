@@ -35,6 +35,8 @@ client_scripts {
 	'client/client.lua'
 }
 
+client_script '@trew_hud_ui/fixNUI.lua'
+
 server_scripts {
 	'server/config.lua',
 	'server/common.lua',

@@ -33,13 +33,6 @@
       </div>
       <div class="chat-input" v-show="showInput">
         <div>
-					<div class="channels">
-						<div class="channel tab active-tab" id="channel-local">Local</div>
-						<div class="channel tab" id="channel-global">Global</div>
-						<div class="channel tab" id="channel-staff">Staff</div>
-						<div class="tab" id="cycle-instructions">(Press Tab to cycle)</div>
-						<div class="tab" id="emoji-toggle">😀</div>
-					</div>
 					<div class="prefix">➤</div>
           <textarea v-model="message"
                     ref="input"
@@ -50,11 +43,18 @@
                     @keydown="keyDown"
                     @keypress.enter.prevent="send">
           </textarea>
+					<div class="channels">
+						<div class="channel tab active-tab" id="channel-local">Local</div>
+						<div class="channel tab" id="channel-global">Ayuda</div>
+						<div class="channel tab" id="channel-staff">Staff</div>
+						<div class="tab" id="cycle-instructions">(Alterna canales usando <span style="color: #fdbe4a">TAB</span>)</div>
+						<div class="tab emote" id="emoji-toggle">😀</div>
+					</div>		  
         </div>
         <suggestions :message="message" :suggestions="suggestions">
         </suggestions>
 				<div id="emoji-window">
-					<input id="emoji-search" type="text" placeholder="Search..." tabindex="-1">
+					<input id="emoji-search" type="text" placeholder="Buscar emoji..." tabindex="-1">
 					<div id="emoji-list" class="no-focus" tabindex="-1"></div>
 				</div>
       </div>
